@@ -2,13 +2,13 @@
 
 This demo project illustrates a method of fetching representations from an API where the API does not have a way to filter the results by the desired attribute.
 
-In this particular example, the Meetup API does not have a way to fetch just the members with photos. Instead, we have to just fetch the members and filter them after receiving the results. 
-This poses a problem: Say there are 100 members in a group. If we fetch the first 20 members and only 5 have photos, we're going to end up with only 5 members and likely  not filled up the tableview. That leaves the user with no indication that there are more members to be loaded (and removes the ability to trigger a fetch when scrolling to the bottom). How do we know ot fetch more? How do we know that we havent filled the table?
+The Meetup API (as far as I'm aware) does not have a way to fetch just the members with photos. Instead, we have to just fetch the members and filter them after receiving the results. 
+This poses a problem: Say there are 100 members in a group. If we fetch the first 20 members and only 5 have photos, we're going to end up with only 5 members and likely not fill up the tableview. This leaves the user with no indication that there are more members to be loaded (and removes the ability to trigger a fetch when scrolling to the bottom). How do we know ot fetch more? How do we know that we havent filled the table?
 
 While the best solution here is most likely to add the ability to filter by members with photos in the API method, this example shows a possible workaround (though not necessarily elegant, it can work in a pinch). 
 
 ## The Gist
-The way this demo works is by introducing a fetch manager class that keeps track of the state of the request and evaluates the filtered results against a threshold that determines whether or not another fetch should be made to satisfy the orginal request.
+The way this demo works is by introducing a fetch manager class that keeps track of the state of the request and evaluates the filtered results against a threshold that determines whether or not another fetch should be made to satisfy the orginal request. If we fetch a page size of 20 with a threshold of 0.8 (so, we require 16) and we get 12, we can start another fetch immediately to get the next page of results. The fetch manager will also keep track of the current offset so when more results are requested by an "scrolled-to-end" trigger, we can fetch from the correct offset.
 
 Basically, the tableViewController creates and "retains" a fetch manager with the appropriate settings:
 ````objective-c
@@ -20,7 +20,7 @@ self.fetchManager.threshold = 0.8; //We'll accept 16 with photos
 
 ````
 
-The fetchManager is passed to a class method on the model class `Member` that is responsible for fetching from the API. The implementation of that method can then use the fetchManager to determine if it needs to fetch another page of results to satisfy the request. Here is the example implementation using AFNetworking for the network requests:
+The fetchManager is passed to a class method on the model class `Member` that is responsible for fetching from the API. The implementation of that method can then use the fetchManager to determine if it needs to fetch another page of results to satisfy the request. Here is an example implementation using AFNetworking for the network requests:
 ````objective-c
 
 + (void)membersInGroup:(NSString *)groupID withFetchManager:(POFetchManager *)fetchManager completion:(void (^)(BOOL doneFetching, NSArray *members, NSError *error))completion
